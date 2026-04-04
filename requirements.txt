@@ -7,5 +7,6 @@ sentence-transformers
 faiss-cpu
 rank-bm25
 transformers
-openai
+# openai
 streamlit
+google-generativeai
