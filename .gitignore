@@ -4,5 +4,5 @@ __pycache__/
 data/embeddings/
 data/processed/
 .venv/
-phase1_walkthrough.md
-contexflow_guide.md
+*.md
+!README.md
