@@ -1,31 +1,70 @@
 from app.utils.text_cleaning import clean_text
 
 def chunk_text(text: str, chunk_size: int = 512, chunk_overlap: int = 50) -> list[str]:
-    """Split text into overlapping chunks.
+    """Split text into overlapping chunks using recursive character splitting.
     
-    Args:
-        text: the full text to split
-        chunk_size: max characters per chunk
-        chunk_overlap: how many characters overlap between consecutive chunks
+    Tries to split at natural boundaries: paragraphs → lines → sentences → words
     """
+    # separators in priority order — try the "biggest" breaks first
+    separators = ["\n\n", "\n", ". ", " "]
+
     chunks = []
-    
-    # step = how far we move forward each iteration
-    # if chunk_size=512 and overlap=50, step=462
-    step = chunk_size - chunk_overlap
-    
-    # slide a window across the text
-    for start in range(0, len(text), step):
-        end = start + chunk_size        # end of this chunk
-        chunk = text[start:end]         # slice the text (Python handles out-of-bounds gracefully)
-        
-        # skip tiny leftover chunks at the end (less than 50 chars = probably garbage)
-        if len(chunk.strip()) < 50:
-            continue
-            
-        chunks.append(chunk.strip())
-    
+    # _recursive_split does the heavy lifting
+    _recursive_split(text, chunk_size, chunk_overlap, separators, chunks)
     return chunks
+
+
+def _recursive_split(text: str, chunk_size: int, chunk_overlap: int, 
+                     separators: list[str], chunks: list[str]):
+    """Recursively split text using the best available separator."""
+    
+    # base case: text fits in one chunk — just add it
+    if len(text.strip()) <= chunk_size:
+        if len(text.strip()) >= 30:          # skip tiny fragments
+            chunks.append(text.strip())
+        return
+
+    # find the best separator that exists in this text
+    separator = ""
+    for sep in separators:
+        if sep in text:
+            separator = sep
+            break
+
+    # if no separator found, fall back to fixed-size splitting
+    if not separator:
+        step = chunk_size - chunk_overlap
+        for start in range(0, len(text), step):
+            chunk = text[start:start + chunk_size].strip()
+            if len(chunk) >= 30:
+                chunks.append(chunk)
+        return
+
+    # split text by the chosen separator
+    parts = text.split(separator)
+
+    # now combine parts back into chunks that fit within chunk_size
+    current_chunk = ""
+    for part in parts:
+        # if adding this part would exceed chunk_size, save current chunk and start new one
+        if len(current_chunk) + len(separator) + len(part) > chunk_size and current_chunk:
+            if len(current_chunk.strip()) >= 30:
+                chunks.append(current_chunk.strip())
+            
+            # start fresh — no overlap at natural boundaries
+            # overlap only applies in the fixed-size fallback (line 36-41)
+            current_chunk = part
+        else:
+            # keep building the current chunk
+            if current_chunk:
+                current_chunk += separator + part
+            else:
+                current_chunk = part
+
+    # don't forget the last chunk
+    if len(current_chunk.strip()) >= 30:
+        chunks.append(current_chunk.strip())
+
 
 
 def chunk_documents(documents: list[dict], chunk_size: int = 512, chunk_overlap: int = 50) -> list[dict]:
