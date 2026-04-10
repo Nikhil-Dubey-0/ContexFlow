@@ -10,3 +10,4 @@ transformers
 # openai
 streamlit
 google-generativeai
+python-docx
