@@ -7,21 +7,21 @@ def load_pdf(file_path: str) -> list[dict]:
     documents = []
 
     try:
-        doc = fitz.open(file_path)
+        doc = fitz.open(file_path) # opens the PDF
     except Exception as e:
         print(f"⚠️ Could not open {file_path}: {e}")
         return []
 
-    file_name = os.path.basename(file_path)
+    file_name = os.path.basename(file_path)  # gets the name of the file not path
 
-    for page_num, page in enumerate(doc):
-        text = page.get_text().strip()
+    for page_num, page in enumerate(doc):  # looping for each page in document
+        text = page.get_text().strip()  # gets the text from the page and strips the whitespace
 
         # Skip empty pages
         if not text:
             continue
 
-        documents.append({
+        documents.append({  # structure of doc stored in list
             "text": text,
             "metadata": {
                 "source": file_name,
@@ -49,7 +49,7 @@ def load_directory(dir_path: str) -> list[dict]:
 
     all_documents = []
     for pdf_file in pdf_files:
-        file_path = os.path.join(dir_path, pdf_file)
+        file_path = os.path.join(dir_path, pdf_file) # intelligently combines the directory path and file name
         docs = load_pdf(file_path)
         all_documents.extend(docs)
 
