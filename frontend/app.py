@@ -90,7 +90,7 @@ if prompt := st.chat_input("Ask a question about your documents..."):
     # generate response
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
-            result = pipeline.query(prompt, top_k=5)
+            result = pipeline.query(prompt, top_k=5, chat_history=st.session_state.messages)
         
         # display the answer
         st.markdown(result["answer"])
