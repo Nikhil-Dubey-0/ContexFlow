@@ -4,6 +4,8 @@ A production-grade **Retrieval-Augmented Generation (RAG)** system built from sc
 
 Upload PDFs or DOCX files, ask questions, and get accurate answers with source citations.
 
+🔗 **[Live Demo](https://contexflow-3s2zbeultxbxzo9umyd2km.streamlit.app/)**
+
 ---
 
 ## ✨ Features
@@ -18,6 +20,24 @@ Upload PDFs or DOCX files, ask questions, and get accurate answers with source c
 | **Multi-Format** | Supports PDF and DOCX document ingestion |
 | **Source Attribution** | Every answer cites the exact document and page number |
 | **Dual Interface** | Streamlit chat UI + FastAPI REST endpoints |
+
+---
+
+## 📊 Performance Benchmarks
+
+| Metric | FAISS Only | Hybrid (FAISS + BM25) |
+|---|---|---|
+| **Recall@5** | 0% | 50% (+50% improvement) |
+| **Retrieval Latency** | ~10ms | ~14ms |
+
+| Pipeline Stage | Avg Latency |
+|---|---|
+| Query Rewriting (LLM) | ~470ms |
+| Hybrid Retrieval (FAISS + BM25 + RRF) | ~14ms |
+| Cross-Encoder Reranking | ~519ms |
+| **Total (excl. generation)** | **~1s** |
+
+> Benchmarked on 622 chunks from 6 documents (158 pages) using CPU inference.
 
 ---
 
