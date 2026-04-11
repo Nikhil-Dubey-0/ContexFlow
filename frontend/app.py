@@ -106,6 +106,21 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
     
+    # reset all documents button
+    if st.button("🔄 Reset All Documents", use_container_width=True):
+        import shutil
+        # wipe uploaded files and embeddings
+        if os.path.exists("data/raw"):
+            shutil.rmtree("data/raw")
+            os.makedirs("data/raw")
+        if os.path.exists("data/embeddings"):
+            shutil.rmtree("data/embeddings")
+            os.makedirs("data/embeddings")
+        st.session_state.messages = []
+        st.cache_resource.clear()
+        st.success("✅ All documents cleared!")
+        st.rerun()
+    
     st.divider()
     st.caption("ContexFlow v1.0")
     st.caption("Built with FAISS • BM25 • Groq")
