@@ -2,8 +2,8 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # LLM
-    google_api_key: str
-    llm_model: str = 'gemini-2.0-flash'
+    groq_api_key: str
+    llm_model: str = "llama-3.3-70b-versatile"
 
     # Embeddings (local, unchanged)
     embedding_model: str = 'all-MiniLM-L6-v2'
