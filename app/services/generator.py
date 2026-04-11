@@ -6,16 +6,16 @@ class Generator:
     """Generates answers using Groq LLM with retrieved context."""
 
     def __init__(self):
-        # Groq uses OpenAI-compatible API — just different base URL
         self.client = OpenAI(
             api_key=settings.groq_api_key,
-            base_url="https://api.groq.com/openai/v1"  # point to Groq instead of OpenAI
+            base_url="https://api.groq.com/openai/v1"
         )
         self.model = settings.llm_model
         print(f"✅ Generator initialized with {self.model}")
 
-    def generate(self, query: str, context_chunks: list[dict]) -> dict:
-        """Generate an answer from query + retrieved chunks."""
+    def generate(self, query: str, context_chunks: list[dict], 
+                 chat_history: list[dict] = None) -> dict:
+        """Generate an answer from query + retrieved chunks + conversation history."""
         
         # --- Build context from retrieved chunks ---
         context_parts = []
@@ -26,7 +26,7 @@ class Generator:
         
         context_string = "\n\n---\n\n".join(context_parts)
 
-        # --- System prompt (instructions for the LLM) ---
+        # --- System prompt ---
         system_prompt = """You are a helpful assistant that answers questions based ONLY on the provided context.
 
 RULES:
@@ -36,22 +36,32 @@ RULES:
 4. Be concise but thorough.
 5. Do not make up information that is not in the context."""
 
-        # --- User message with context + question ---
+        # --- Build messages list ---
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        # add conversation history (last 6 messages = 3 turns)
+        # this gives the LLM context about the ongoing conversation
+        if chat_history:
+            for msg in chat_history[-6:]:
+                messages.append({
+                    "role": msg["role"],
+                    "content": msg["content"]
+                })
+        
+        # add current user message with context
         user_message = f"""CONTEXT:
 {context_string}
 
 QUESTION: {query}"""
+        messages.append({"role": "user", "content": user_message})
 
-        # --- Call Groq (OpenAI-compatible format) ---
+        # --- Call Groq ---
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message}
-                ],
-                temperature=0.3,       # low = more factual, less creative
-                max_tokens=1024        # max length of the answer
+                messages=messages,
+                temperature=0.3,
+                max_tokens=1024
             )
             answer = response.choices[0].message.content
         except Exception as e:
