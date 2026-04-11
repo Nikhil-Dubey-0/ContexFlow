@@ -67,11 +67,46 @@ def _recursive_split(text: str, chunk_size: int, chunk_overlap: int,
 
 
 
+def _extract_page_context(text: str) -> str:
+    """Extract a short context prefix from the beginning of a page.
+    
+    Grabs the first 1-2 meaningful lines — usually a heading, course name,
+    or section title. This gets prepended to every chunk from this page
+    so chunks don't lose their parent context.
+    
+    Example:
+        Page text starts with: "Deep Learning (BIT-326)\nCourse Category: PC\n..."
+        Returns: "Deep Learning (BIT-326)"
+    """
+    lines = [line.strip() for line in text.strip().split("\n") if line.strip()]
+    
+    if not lines:
+        return ""
+    
+    # take first 1-2 non-trivial lines as context (skip page numbers etc.)
+    context_lines = []
+    for line in lines[:3]:  # look at first 3 lines
+        # skip lines that are just numbers (page numbers)
+        if line.isdigit():
+            continue
+        # skip very short lines (likely fragments)
+        if len(line) < 5:
+            continue
+        context_lines.append(line)
+        if len(" | ".join(context_lines)) > 80:  # keep context short
+            break
+    
+    return " | ".join(context_lines) if context_lines else ""
+
+
 def chunk_documents(documents: list[dict], chunk_size: int = 512, chunk_overlap: int = 50) -> list[dict]:
     """Chunk a list of documents, preserving metadata.
     
     Takes the output of loader.load_directory() and returns
     a new list where each item is a single chunk with its metadata.
+    
+    Each chunk is enriched with context from the page header so it
+    doesn't lose connection to its parent section/course.
     """
     all_chunks = []
     
@@ -79,17 +114,26 @@ def chunk_documents(documents: list[dict], chunk_size: int = 512, chunk_overlap:
         # clean the text first before chunking
         cleaned_text = clean_text(doc["text"])
         
+        # extract context from the page (first heading/course name)
+        page_context = _extract_page_context(cleaned_text)
+        
         # split this document's text into chunks
         text_chunks = chunk_text(cleaned_text, chunk_size, chunk_overlap)
         
         # create a new dict for each chunk, carrying over the original metadata
         for i, chunk in enumerate(text_chunks):
+            # prepend context if it's not already in the chunk
+            if page_context and page_context not in chunk:
+                enriched_text = f"[{page_context}]\n{chunk}"
+            else:
+                enriched_text = chunk
+            
             all_chunks.append({
-                "text": chunk,
+                "text": enriched_text,
                 "metadata": {
                     "source": doc["metadata"]["source"],      # original filename
                     "page": doc["metadata"]["page"],          # original page number
-                    "chunk_index": i,                          # which chunk of this page (0, 1, 2...)
+                    "chunk_index": i,                          # which chunk of this page
                 }
             })
     
