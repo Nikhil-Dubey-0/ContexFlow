@@ -1,0 +1,12 @@
+services:
+  contex-flow:
+    build: .
+    ports:
+      - "8501:8501"     # Streamlit UI  
+      - "8000:8000"     # FastAPI (if needed)
+    volumes:
+      - ./data:/app/data    # persist documents & embeddings across restarts
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
