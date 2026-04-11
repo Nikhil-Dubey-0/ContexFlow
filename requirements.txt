@@ -9,5 +9,5 @@ rank-bm25
 transformers
 openai
 streamlit
-google-generativeai
 python-docx
+numpy

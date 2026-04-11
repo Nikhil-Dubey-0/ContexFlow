@@ -3,6 +3,6 @@ __pycache__/
 *.pyc
 data/embeddings/
 data/processed/
+data/raw/
 .venv/
-*.md
-!README.md
+scripts/find_semester.py
