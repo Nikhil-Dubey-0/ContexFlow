@@ -23,8 +23,10 @@ class QueryProcessor:
                 model=settings.llm_model,
                 messages=[
                     {"role": "system", "content": 
-                     "Rewrite the following user question to be more specific and search-friendly. "
-                     "Expand abbreviations, add relevant synonyms, and make it clearer. "
+                     "Rewrite the user's question to improve document search. "
+                     "Keep it SHORT (under 15 words). "
+                     "Include alternate notations (e.g., 'Semester 6' → include 'Semester VI'). "
+                     "Include key synonyms. "
                      "Return ONLY the rewritten query, nothing else."},
                     {"role": "user", "content": query}
                 ],
