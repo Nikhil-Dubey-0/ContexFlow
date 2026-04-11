@@ -10,20 +10,21 @@ class Retriever:
     """Hybrid retriever: combines FAISS (semantic) + BM25 (keyword) search."""
 
     def __init__(self):
-        # --- FAISS (semantic search) ---
         self.vector_store = VectorStore()
         embeddings_dir = f"{settings.data_dir}/embeddings"
-        self.vector_store.load(embeddings_dir)
-
-        # --- BM25 (keyword search) --- Ranks documents by how many query words they contain, weighted by rarity. 
-        # BM25 needs a list of tokenized documents (each doc = list of words)
-        # we use the same metadata from the vector store
-        self.documents = self.vector_store.metadata  # list of {text, metadata}
         
-        # tokenize all documents for BM25 (simple whitespace split)
-        tokenized_docs = [doc["text"].lower().split() for doc in self.documents]
-        self.bm25 = BM25Okapi(tokenized_docs)
-        print(f"✅ BM25 index built with {len(tokenized_docs)} documents")
+        self.documents = []
+        self.bm25 = None
+        
+        # try to load existing index — might not exist on fresh deployment
+        try:
+            self.vector_store.load(embeddings_dir)
+            self.documents = self.vector_store.metadata
+            tokenized_docs = [doc["text"].lower().split() for doc in self.documents]
+            self.bm25 = BM25Okapi(tokenized_docs)
+            print(f"✅ BM25 index built with {len(tokenized_docs)} documents")
+        except Exception:
+            print("⚠️ No existing index found. Upload documents to get started.")
 
     def _faiss_search(self, query: str, top_k: int) -> list[dict]:
         """Semantic search using FAISS embeddings."""
@@ -98,6 +99,9 @@ class Retriever:
             query: user's search query
             top_k: how many final results to return
         """
+        if not self.documents:
+            return []  # no documents indexed yet
+        
         top_k = top_k or settings.top_k
 
         # get results from both systems (fetch more than top_k to give RRF more to work with)
