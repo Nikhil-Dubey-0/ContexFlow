@@ -1,4 +1,3 @@
-"""Quick benchmark to get resume-worthy metrics for ContexFlow."""
 import sys, time
 sys.path.insert(0, ".")
 
