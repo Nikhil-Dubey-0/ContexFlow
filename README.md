@@ -1,6 +1,6 @@
 # ContexFlow 🔍
 
-A production-grade **Retrieval-Augmented Generation (RAG)** system built from scratch in Python — no LangChain, no abstractions, just pure engineering.
+A **Retrieval-Augmented Generation (RAG)** system built from scratch in Python — no LangChain, no abstractions, just pure engineering.
 
 Upload PDFs or DOCX files, ask questions, and get accurate answers with source citations.
 
