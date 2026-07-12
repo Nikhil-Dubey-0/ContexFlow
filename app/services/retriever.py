@@ -53,7 +53,21 @@ class Retriever:
                 })
         return results
 
-    def _reciprocal_rank_fusion(self, faiss_results: list[dict], 
+    @staticmethod
+    def _chunk_key(doc: dict) -> str:
+        """Build a stable unique key for a chunk.
+
+        Uses (source, page, chunk_index) — a real identity for the chunk.
+        The previous text[:50] approach collided because every chunk on a
+        page shares the same "[page-context]" prefix added during chunking,
+        so distinct chunks were wrongly merged during fusion.
+        """
+        meta = doc["metadata"]
+        # chunk_index may be missing in older indexes — fall back to text
+        chunk_index = meta.get("chunk_index", doc["text"][:50])
+        return f"{meta['source']}_{meta['page']}_{chunk_index}"
+
+    def _reciprocal_rank_fusion(self, faiss_results: list[dict],
                                  bm25_results: list[dict], 
                                  k: int = 60) -> list[dict]:
         """Merge two ranked lists using Reciprocal Rank Fusion (RRF).
@@ -61,21 +75,20 @@ class Retriever:
         RRF score = sum of 1 / (k + rank) for each list the doc appears in.
         k=60 is the standard constant (from the original paper).
         
-        Why RRF? It doesn't care about the actual scores (which are on 
-        different scales for FAISS(L2 distances) vs BM25(term frequency score)). It only cares about RANK position.
+        Why RRF? It doesn't care about the actual scores (which are on
+        different scales for FAISS(cosine similarity) vs BM25(term frequency score)). It only cares about RANK position.
         """
         # build a dict: chunk_key → {doc_data, rrf_score}
         doc_scores = {}
         
         for rank, doc in enumerate(faiss_results):
-            # create a unique key for each chunk
-            key = f"{doc['metadata']['source']}_{doc['metadata']['page']}_{doc['text'][:50]}"
+            key = self._chunk_key(doc)
             if key not in doc_scores:
                 doc_scores[key] = {"doc": doc, "score": 0}
             doc_scores[key]["score"] += 1 / (k + rank + 1)
 
         for rank, doc in enumerate(bm25_results):
-            key = f"{doc['metadata']['source']}_{doc['metadata']['page']}_{doc['text'][:50]}"
+            key = self._chunk_key(doc)
             if key not in doc_scores:
                 doc_scores[key] = {"doc": doc, "score": 0}
             doc_scores[key]["score"] += 1 / (k + rank + 1)
