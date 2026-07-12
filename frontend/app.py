@@ -1,6 +1,10 @@
 import sys
 sys.path.insert(0, ".")
 
+# TLS-via-OS-store + UTF-8 console; must run before app/network imports
+from app.bootstrap import init as _init
+_init()
+
 import streamlit as st
 from app.services.rag_pipeline import RAGPipeline
 from app.ingestion.embedding_pipeline import IngestionPipeline
@@ -165,8 +169,11 @@ if prompt := st.chat_input("Ask a question about your documents..."):
         with st.chat_message("assistant"):
             try:
                 with st.spinner("🔍 Searching documents..."):
+                    # pass prior turns only — the current question is added
+                    # separately (with retrieved context) inside the generator,
+                    # so including it here would send it to the LLM twice
                     token_stream, sources, rewritten_query = pipeline.stream_query(
-                        prompt, top_k=5, chat_history=st.session_state.messages
+                        prompt, top_k=5, chat_history=st.session_state.messages[:-1]
                     )
                 
                 answer = st.write_stream(token_stream)
