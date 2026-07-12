@@ -6,3 +6,4 @@ data/processed/
 data/raw/
 .venv/
 scripts/find_semester.py
+claude.md
