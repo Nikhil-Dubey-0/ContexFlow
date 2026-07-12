@@ -1,0 +1,23 @@
+# virtual envs
+.venv/
+venv/
+
+# version control
+.git/
+.gitignore
+
+# python caches
+__pycache__/
+*.pyc
+*.pyo
+
+# local data & secrets (mounted/generated at runtime instead)
+data/raw/
+data/embeddings/
+data/processed/
+.env
+
+# misc
+*.md
+tests/
+.pytest_cache/
