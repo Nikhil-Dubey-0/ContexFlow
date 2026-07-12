@@ -1,5 +1,9 @@
+"""Quick benchmark to get resume-worthy metrics for ContexFlow."""
 import sys, time
 sys.path.insert(0, ".")
+
+from app.bootstrap import init as _init
+_init()
 
 from app.models.embeddings import embedding_model
 from app.db.vector_store import VectorStore
