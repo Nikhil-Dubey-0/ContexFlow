@@ -56,16 +56,15 @@ QUESTION: {query}"""
         messages.append({"role": "user", "content": user_message})
 
         # --- Call Groq ---
-        try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=0.3,
-                max_tokens=1024
-            )
-            answer = response.choices[0].message.content
-        except Exception as e:
-            answer = f"Error generating response: {e}"
+        # let exceptions propagate so callers (e.g. the API) can return a
+        # real error status instead of a 200 with a fake "answer"
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            temperature=0.3,
+            max_tokens=1024
+        )
+        answer = response.choices[0].message.content
 
         # --- Build sources list ---
         sources = []
