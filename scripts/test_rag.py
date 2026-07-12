@@ -1,6 +1,9 @@
 import sys
 sys.path.insert(0, ".")
 
+from app.bootstrap import init as _init
+_init()
+
 from app.services.rag_pipeline import RAGPipeline
 
 pipeline = RAGPipeline()
