@@ -8,10 +8,12 @@ class VectorStore:
     """FAISS-based vector store with metadata tracking."""
 
     def __init__(self, dimension: int = 384):
-        # IndexFlatL2 = brute-force search using L2 (Euclidean) distance
-        # simple, accurate, good enough for <100k vectors
-        # for millions of vectors, you'd use IndexIVFFlat (approximate search)
-        self.index = faiss.IndexFlatL2(dimension)
+        # IndexFlatIP = brute-force search using inner product.
+        # Because we store L2-normalized vectors (see EmbeddingModel),
+        # inner product == cosine similarity — the metric MiniLM is trained for.
+        # Simple, accurate, good enough for <100k vectors; for millions you'd
+        # use IndexIVFFlat (approximate search).
+        self.index = faiss.IndexFlatIP(dimension)
         
         # parallel list — metadata[i] corresponds to the i-th vector in the index
         self.metadata = []
@@ -54,7 +56,7 @@ class VectorStore:
         query_embedding = np.array([query_embedding], dtype=np.float32)
         
         # search returns:
-        #   distances: array of shape (1, top_k) — L2 distances (lower = more similar)
+        #   distances: array of shape (1, top_k) — cosine similarities (higher = more similar)
         #   indices: array of shape (1, top_k) — positions in the index
         distances, indices = self.index.search(query_embedding, top_k)
         
