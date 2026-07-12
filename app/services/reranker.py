@@ -1,4 +1,5 @@
 from sentence_transformers import CrossEncoder  # deeper model that reads query+doc pairs
+from app.models.embeddings import _load_with_offline_fallback
 
 
 class Reranker:
@@ -12,7 +13,9 @@ class Reranker:
     def __init__(self, model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"):
         print(f"🔄 Loading reranker model: {model_name}...")
         # CrossEncoder is ~80MB, runs on CPU, loads once
-        self.model = CrossEncoder(model_name)
+        self.model = _load_with_offline_fallback(
+            lambda **kw: CrossEncoder(model_name, **kw), f"reranker '{model_name}'"
+        )
         print(f"✅ Reranker loaded!")
 
     def rerank(self, query: str, chunks: list[dict], top_k: int = 5) -> list[dict]:
